@@ -1,0 +1,12 @@
+pandas
+numpy
+matplotlib
+scikit-learn
+yfinance
+statsmodels
+streamlit
+plotly
+dash
+requests
+beautifulsoup4
+jieba
