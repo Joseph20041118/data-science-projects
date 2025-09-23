@@ -49,8 +49,12 @@ Both options include numeric features (e.g., lot area, rooms, age, location) and
 - Achieved higher **R²** and lower **RMSE**.  
 
 Example plots generated:  
-- `plots/pred_vs_actual.png`  
-- `plots/feature_importance.png` (Random Forest only)  
+- `plots/pred_vs_actual.png`
+- <img width="552" height="542" alt="Screenshot 2025-09-23 164450" src="https://github.com/user-attachments/assets/1f8d3080-30d9-4d7d-8d6a-707b750a8cf3" />
+
+- `plots/feature_importance.png` (Random Forest only)
+- <img width="798" height="470" alt="Screenshot 2025-09-23 164504" src="https://github.com/user-attachments/assets/75a57d9e-ca93-4507-b215-d65cf226af6e" />
+
 
 ---
 
