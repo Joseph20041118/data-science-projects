@@ -56,7 +56,7 @@ For complete experiments, please download the dataset directly from Kaggle.
 - Achieved strong accuracy and ROC-AUC scores on the validation set.  
 
 Example visualization (confusion matrix):  
-![Confusion Matrix](plots/confusion_matrix.png)
+<img width="657" height="492" alt="Screenshot 2025-09-23 163453" src="https://github.com/user-attachments/assets/6d71506a-98b6-4fb1-830d-8b97c7517222" />
 
 ---
 
