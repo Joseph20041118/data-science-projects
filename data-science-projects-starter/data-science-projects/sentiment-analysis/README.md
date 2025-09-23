@@ -1,3 +1,36 @@
+# Sentiment Analysis on Twitter Data (Sentiment140 Dataset)
+
+This project demonstrates sentiment classification on Twitter text using the **Sentiment140 dataset** (1.6M tweets).  
+It is part of my portfolio to showcase skills in **data preprocessing, feature engineering, and machine learning model evaluation**.
+
+---
+
+## 🔹 Pipeline Overview
+1. **Load Data**  
+   - Auto-detect Kaggle dataset (Sentiment140)  
+   - Fallback: load from local `data/sentiment.csv` (with columns `text`, `label`)
+
+2. **Preprocessing & Cleaning**  
+   - Remove URLs, @user mentions, hashtags  
+   - Strip punctuation and extra whitespace  
+   - Convert text to lowercase
+
+3. **Dataset Split**  
+   - Train/validation split for model evaluation  
+
+4. **Feature Engineering**  
+   - Apply **TF-IDF vectorization** (unigrams + bigrams)  
+
+5. **Model Training**  
+   - Naive Bayes  
+   - Logistic Regression  
+
+6. **Evaluation**  
+   - Accuracy, Precision, Recall, F1-score  
+   - Confusion Matrix (saved to `plots/confusion_matrix.png`)  
+
+7. **Model Persistence**  
+   - Save best-performing model and TF-IDF vectorizer for reuse  
 
 ---
 
@@ -18,31 +51,9 @@ For complete experiments, please download the dataset directly from Kaggle.
 
 ---
 
-## ⚙️ Methods
-1. **Data Cleaning**  
-   - Removed URLs, mentions, hashtags, numbers, and special characters.  
-   - Lowercased text.  
-   - Optional: Tokenization and stopword removal.  
-
-2. **Feature Engineering**  
-   - Applied **TF-IDF vectorization** for text representation.  
-
-3. **Modeling**  
-   - Trained baseline models:  
-     - Naive Bayes  
-     - Logistic Regression  
-   - Compared performance across classifiers.  
-
-4. **Evaluation**  
-   - Confusion Matrix  
-   - Accuracy, Precision, Recall, F1-score  
-   - ROC-AUC curves  
-
----
-
 ## 📈 Results
 - **Logistic Regression** performed best among baseline models.  
-- Achieved strong accuracy and ROC-AUC scores on the test set.  
+- Achieved strong accuracy and ROC-AUC scores on the validation set.  
 
 Example visualization (confusion matrix):  
 ![Confusion Matrix](plots/confusion_matrix.png)
