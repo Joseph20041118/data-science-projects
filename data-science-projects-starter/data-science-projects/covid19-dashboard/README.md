@@ -1,32 +1,51 @@
-# COVID-19 Dashboard
+# COVID-19 Interactive Dashboard
 
-## 🔎 Overview
-Interactive time-series dashboard for cases/deaths or any public dataset.
+This project builds an interactive dashboard to visualize **COVID-19 cases and trends** using Python.  
+The goal is to practice **time-series analysis, data cleaning, and interactive visualization** with libraries like **Plotly** and **Streamlit/Dash**.
 
-## 📂 Dataset
-- Describe the dataset source and how to download it.
-- Place raw files in the `data/` folder (do **not** commit large files).
+---
 
-## ⚙️ Tech
-- Python, Jupyter Notebook
-- pandas, numpy, matplotlib
-- (Optional libs) Streamlit or Dash
+## 🔹 Pipeline Overview
+1. **Load Data**  
+   - Download daily COVID-19 case data (Johns Hopkins University / Our World in Data)  
+   - Fallback: use a local CSV in `data/covid.csv`
 
-## 🚀 Tasks
-- Data cleaning & EDA
-- Modeling or visualization
-- Evaluation & charts
+2. **Preprocessing**  
+   - Parse dates, handle missing values  
+   - Aggregate by country / region  
 
-## 📊 Results
-- Include key figures in the `plots/` folder and reference them here.
+3. **Visualization**  
+   - Time-series plots of confirmed cases, deaths, vaccinations  
+   - Comparisons across multiple countries  
+   - Interactive filters (date range, region, metric)
 
-## ▶️ How to Run
-```bash
-pip install -r ../requirements.txt
-jupyter notebook
-```
-Open the notebook in this folder and run all cells.
+4. **Dashboard App**  
+   - Built with **Streamlit** (or Plotly Dash)  
+   - Supports dropdown filters, sliders, and real-time plots  
 
-## ✅ Next Steps
-- Add improvements or new features.
-- Write short notes for what you learned.
+5. **Export & Deployment**  
+   - Save static plots into `plots/` folder  
+   - Run app locally: `streamlit run app.py`
+
+---
+
+## 📊 Dataset
+- **Preferred source:** [Our World in Data COVID-19 dataset](https://ourworldindata.org/covid-deaths)  
+- **Alternative:** Johns Hopkins CSSE COVID-19 Data (time-series CSV)  
+- **Fallback:** Custom `data/covid.csv`  
+
+---
+
+## 📈 Example Features
+- Line chart of daily new cases  
+- Rolling average of cases/deaths  
+- Comparison: US vs Taiwan vs Italy  
+- Vaccination progress plots  
+
+---
+
+## 🚀 How to Run
+1. Clone this repository:
+   ```bash
+   git clone https://github.com/your-username/covid19-dashboard.git
+   cd covid19-dashboard
