@@ -46,8 +46,7 @@ Then open http://localhost:8501 in your browser.
 - [Our World in Data — COVID-19 dataset](https://github.com/owid/covid-19-data)
 
 ## 🔹 Screenshot
-*(Optional: add a screenshot image to your repo, e.g. `docs/screenshot.png`, then uncomment below)*  
-<!-- ![Dashboard screenshot](docs/screenshot.png) -->
+<img width="1563" height="763" alt="Screenshot 2025-09-26 153317" src="https://github.com/user-attachments/assets/ffbb731d-6c6b-48b1-b1da-4f07d641d888" />
 
 ## 🔹 Author
 **Joseph Wang (Mt. SAC)** — CS transfer applicant (Fall 2026)
