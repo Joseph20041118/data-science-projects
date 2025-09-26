@@ -9,31 +9,36 @@ import streamlit as st
 
 st.set_page_config(page_title="COVID-19 Dashboard", layout="wide")
 
-DATA_CLEAN = "owid_clean.csv"   # place this file next to app.py
+# ---------------------------
+# Dataset paths
+# ---------------------------
+DATA_FULL = "owid_clean.csv"     # big dataset (not on GitHub, download manually)
+DATA_SAMPLE = "owid_sample.csv"  # small dataset (included in repo)
 
 # ---------------------------
 # Data loading & preparation
 # ---------------------------
 @st.cache_data
 def load_data():
-    if not os.path.exists(DATA_CLEAN):
-        st.error("Missing owid_clean.csv. Place it in the same folder as app.py.")
+    if os.path.exists(DATA_FULL):
+        st.info("Loaded full dataset (owid_clean.csv)")
+        df = pd.read_csv(DATA_FULL, parse_dates=["date"])
+    elif os.path.exists(DATA_SAMPLE):
+        st.warning("⚠️ Full dataset not found. Using sample dataset (owid_sample.csv).")
+        df = pd.read_csv(DATA_SAMPLE, parse_dates=["date"])
+    else:
+        st.error("❌ No dataset found. Please add owid_clean.csv or owid_sample.csv.")
         st.stop()
-    df = pd.read_csv(DATA_CLEAN, parse_dates=["date"])
 
     # Remove aggregate regions (world/continents)
     drop_iso = {"OWID_WRL","OWID_AFR","OWID_ASI","OWID_EUR","OWID_EUN",
                 "OWID_INT","OWID_NAM","OWID_OCE","OWID_SAM"}
     df = df[~df["iso_code"].isin(drop_iso)].copy()
 
-    # Ensure optional columns exist
-    for c in ["new_cases","new_deaths","new_vaccinations",
-              "new_cases_per_million","new_deaths_per_million","new_vaccinations_per_million"]:
-        if c not in df.columns:
-            df[c] = np.nan
     return df
 
 df = load_data()
+
 
 def ensure_rolling(_df: pd.DataFrame, base_col: str, window: int) -> pd.DataFrame:
     """
@@ -194,3 +199,4 @@ else:
     st.plotly_chart(fig_map, use_container_width=True)
 
 st.caption("Tip: adjust the rolling window, toggle per-million, and filter dates to explore trends.")
+
