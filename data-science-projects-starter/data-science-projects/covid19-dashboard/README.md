@@ -32,7 +32,10 @@ The goal is to practice **time-series analysis, data cleaning, and interactive v
 ## 📊 Dataset
 - **Preferred source:** [Our World in Data COVID-19 dataset](https://ourworldindata.org/covid-deaths)  
 - **Alternative:** Johns Hopkins CSSE COVID-19 Data (time-series CSV)  
-- **Fallback:** Custom `data/covid.csv`  
+- Data is too large to host on GitHub.
+Please download owid_clean.csv from:
+https://www.kaggle.com/datasets/owid/covid-19-data
+
 
 ---
 
