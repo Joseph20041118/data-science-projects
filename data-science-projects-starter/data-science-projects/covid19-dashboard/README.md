@@ -1,53 +1,68 @@
 # COVID-19 Interactive Dashboard
 
-This project builds an interactive dashboard to visualize **COVID-19 cases and trends** using Python.  
-The goal is to practice **time-series analysis, data cleaning, and interactive visualization** with libraries like **Plotly** and **Streamlit/Dash**.
+An interactive COVID-19 dashboard built with **Streamlit**, using the **Our World in Data (OWID)** dataset.  
+Explore country-level trends for cases, deaths, and vaccinations with rolling averages and a global map.
+
+**👉 Live Demo:** https://data-science-projects-q6hmdio76khz3ud2fw6u8e.streamlit.app/
 
 ---
 
-## 🔹 Pipeline Overview
-1. **Load Data**  
-   - Download daily COVID-19 case data (Johns Hopkins University / Our World in Data)  
-   - Fallback: use a local CSV in `data/covid.csv`
-
-2. **Preprocessing**  
-   - Parse dates, handle missing values  
-   - Aggregate by country / region  
-
-3. **Visualization**  
-   - Time-series plots of confirmed cases, deaths, vaccinations  
-   - Comparisons across multiple countries  
-   - Interactive filters (date range, region, metric)
-
-4. **Dashboard App**  
-   - Built with **Streamlit** (or Plotly Dash)  
-   - Supports dropdown filters, sliders, and real-time plots  
-
-5. **Export & Deployment**  
-   - Save static plots into `plots/` folder  
-   - Run app locally: `streamlit run app.py`
+## 🔹 Features
+- Select multiple countries/regions to compare
+- Switch between **Cases**, **Deaths**, and **Vaccinations**
+- Toggle absolute vs. per-million values
+- Adjustable rolling window (default 7 days)
+- Custom date range filter
+- KPI cards (latest value & WoW change)
+- Global choropleth map (latest per country)
+- Robust data loading (local CSV or fallback to OWID sample)
 
 ---
 
-## 📊 Dataset
-- **Preferred source:** [Our World in Data COVID-19 dataset](https://ourworldindata.org/covid-deaths)  
-- **Alternative:** Johns Hopkins CSSE COVID-19 Data (time-series CSV)  
-- Data is too large to host on GitHub.
-Please download owid_clean.csv from:
-(https://www.kaggle.com/code/yuchiaowang/covid) /kaggle/working/owid_clean.csv
+## 🔹 Project Structure
+covid19-dashboard/
+├── app.py # Streamlit app (entry point)
+├── requirements.txt # Dependencies
+├── owid_sample.csv # Small sample (optional, for quick start)
+└── README.md
+
+> The full `owid_clean.csv` is large (over GitHub’s 100MB limit) and **not included**.  
+> The app will auto-use `owid_sample.csv` if present, otherwise it will **download a small OWID slice on first run**.
 
 ---
 
-## 📈 Example Features
-- Line chart of daily new cases  
-- Rolling average of cases/deaths  
-- Comparison: US vs Taiwan vs Italy  
-- Vaccination progress plots  
+## 🔹 Run Locally (Windows/Mac/Linux)
 
----
+### 1. Clone and enter the project
+```bash
+git clone https://github.com/<your-username>/covid19-dashboard.git
+cd covid19-dashboard
 
-## 🚀 How to Run
-1. Clone this repository:
-   ```bash
-   git clone https://github.com/your-username/covid19-dashboard.git
-   cd covid19-dashboard
+**### 2. Install dependencies
+**pip install -r requirements.txt
+
+**### 3. (Optional) Put a dataset next to app.py
+**
+owid_clean.csv (full, from Kaggle/OWID) or
+
+owid_sample.csv (small sample provided)
+4. Start the app
+streamlit run app.py
+
+
+Then open http://localhost:8501
+ in your browser.
+
+🔹 Data Source
+
+Our World in Data — COVID-19 dataset
+
+🔹 Screenshot
+
+(Optional: add a screenshot image to your repo, e.g. docs/screenshot.png, then uncomment below)
+
+<!-- ![Dashboard screenshot](docs/screenshot.png) -->
+🔹 Author
+
+Joseph Wang (Mt. SAC) — CS transfer applicant (Fall 2026)
+
