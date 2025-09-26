@@ -1,43 +1,57 @@
-# app.py — COVID-19 Interactive Dashboard (OWID)
-# Run locally: streamlit run app.py
-
-import os
+# --- Robust dataset loader (works locally & on Streamlit Cloud) ---
+import os, glob, io
 import numpy as np
 import pandas as pd
 import plotly.express as px
 import streamlit as st
+import requests  # for fallback download
 
 st.set_page_config(page_title="COVID-19 Dashboard", layout="wide")
 
-# ---------------------------
-# Dataset paths
-# ---------------------------
-DATA_FULL = "owid_clean.csv"     # big dataset (not on GitHub, download manually)
-DATA_SAMPLE = "owid_sample.csv"  # small dataset (included in repo)
+CANDIDATES = [
+    "owid_clean.csv",
+    "owid_sample.csv",
+    os.path.join("data", "owid_clean.csv"),
+    os.path.join("data", "owid_sample.csv"),
+]
 
-# ---------------------------
-# Data loading & preparation
-# ---------------------------
 @st.cache_data
-def load_data():
-    if os.path.exists(DATA_FULL):
-        st.info("Loaded full dataset (owid_clean.csv)")
-        df = pd.read_csv(DATA_FULL, parse_dates=["date"])
-    elif os.path.exists(DATA_SAMPLE):
-        st.warning("⚠️ Full dataset not found. Using sample dataset (owid_sample.csv).")
-        df = pd.read_csv(DATA_SAMPLE, parse_dates=["date"])
-    else:
-        st.error("❌ No dataset found. Please add owid_clean.csv or owid_sample.csv.")
-        st.stop()
+def load_dataset():
+    # 1) Try local files (root or data/)
+    for path in CANDIDATES:
+        if os.path.exists(path):
+            st.info(f"Loaded local dataset: `{path}`")
+            return pd.read_csv(path, parse_dates=["date"])
 
-    # Remove aggregate regions (world/continents)
-    drop_iso = {"OWID_WRL","OWID_AFR","OWID_ASI","OWID_EUR","OWID_EUN",
-                "OWID_INT","OWID_NAM","OWID_OCE","OWID_SAM"}
+    # 2) Last-resort: download small sample from OWID
+    st.warning("Local dataset not found. Downloading a small sample from OWID (first run may take a few seconds).")
+    url = "https://raw.githubusercontent.com/owid/covid-19-data/master/public/data/owid-covid-data.csv"
+    r = requests.get(url, timeout=30)
+    r.raise_for_status()
+    full = pd.read_csv(io.StringIO(r.text), parse_dates=["date"])
+
+    # Shrink to a safe sample: 6 countries, years 2020–2021
+    keep = ["United States","Taiwan","Italy","Japan","India","Brazil"]
+    sample = full[full["location"].isin(keep)].copy()
+    sample = sample[(sample["date"].dt.year >= 2020) & (sample["date"].dt.year <= 2021)]
+
+    # Keep only relevant columns (smaller memory)
+    cols = [
+        "iso_code","continent","location","date","population",
+        "new_cases","new_deaths","new_vaccinations",
+        "total_cases","total_deaths",
+        "new_cases_per_million","new_deaths_per_million","new_vaccinations_per_million"
+    ]
+    sample = sample[[c for c in cols if c in sample.columns]]
+    return sample
+
+df = load_dataset()
+
+# Drop aggregates (world/continents)
+drop_iso = {"OWID_WRL","OWID_AFR","OWID_ASI","OWID_EUR","OWID_EUN","OWID_INT","OWID_NAM","OWID_OCE","OWID_SAM"}
+if "iso_code" in df.columns:
     df = df[~df["iso_code"].isin(drop_iso)].copy()
 
-    return df
-
-df = load_data()
 
 
 def ensure_rolling(_df: pd.DataFrame, base_col: str, window: int) -> pd.DataFrame:
@@ -199,4 +213,5 @@ else:
     st.plotly_chart(fig_map, use_container_width=True)
 
 st.caption("Tip: adjust the rolling window, toggle per-million, and filter dates to explore trends.")
+
 
