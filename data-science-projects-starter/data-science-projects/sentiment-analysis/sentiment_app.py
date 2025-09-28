@@ -72,12 +72,38 @@ else:
     X_train = X_valid = X
     y_train = y_valid = None
 
-# ---------- vectorizer ----------
+# ---------- vectorizer (robust for tiny datasets) ----------
 max_features = st.sidebar.number_input('TF-IDF max_features', 1000, 200000, 20000, 1000)
-vectorizer = TfidfVectorizer(stop_words='english', max_features=max_features, ngram_range=(1,2), min_df=2)
+min_df_ui = st.sidebar.number_input('min_df (keep terms seen in ≥N docs)', 1, 10, 1, 1)  # default 1
+max_df_ui = st.sidebar.slider('max_df (drop overly common terms)', 0.5, 1.0, 1.0, 0.05)
+use_stop = st.sidebar.checkbox('Use English stopwords', True)
 
-X_train_vec = vectorizer.fit_transform(X_train)
+def make_vectorizer(min_df, max_df, stop):
+    return TfidfVectorizer(
+        stop_words=('english' if stop else None),
+        max_features=max_features,
+        ngram_range=(1, 2),
+        min_df=min_df,
+        max_df=max_df
+    )
+
+vectorizer = make_vectorizer(min_df_ui, max_df_ui, use_stop)
+
+try:
+    X_train_vec = vectorizer.fit_transform(X_train)
+except ValueError:
+    # Fallback for very small / sparse datasets
+    vectorizer = make_vectorizer(min_df=1, max_df=1.0, stop=False)
+    X_train_vec = vectorizer.fit_transform(X_train)
+
 X_valid_vec = vectorizer.transform(X_valid)
+
+#  need at least two classes to train/evaluate
+if label_col and df[label_col].nunique() < 2:
+    st.error("Label column must contain at least two classes (e.g., positive and negative).")
+    st.stop()
+
+
 
 # ---------- model ----------
 model_name = st.sidebar.selectbox('Model', ['Logistic Regression','Naive Bayes'])
