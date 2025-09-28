@@ -1,67 +1,77 @@
-# Sentiment Analysis on Twitter Data (Sentiment140 Dataset)
+# Sentiment Analysis — Interactive App
 
-This project demonstrates sentiment classification on Twitter text using the **Sentiment140 dataset** (1.6M tweets).  
-It is part of my portfolio to showcase skills in **data preprocessing, feature engineering, and machine learning model evaluation**.
+An interactive sentiment analysis dashboard built with **Streamlit**.  
+Upload a dataset of text (tweets, reviews, etc.), train models (Naive Bayes / Logistic Regression), visualize results, and try live predictions.
 
----
-
-## 🔹 Pipeline Overview
-1. **Load Data**  
-   - Auto-detect Kaggle dataset (Sentiment140)  
-   - Fallback: load from local `data/sentiment.csv` (with columns `text`, `label`)
-
-2. **Preprocessing & Cleaning**  
-   - Remove URLs, @user mentions, hashtags  
-   - Strip punctuation and extra whitespace  
-   - Convert text to lowercase
-
-3. **Dataset Split**  
-   - Train/validation split for model evaluation  
-
-4. **Feature Engineering**  
-   - Apply **TF-IDF vectorization** (unigrams + bigrams)  
-
-5. **Model Training**  
-   - Naive Bayes  
-   - Logistic Regression  
-
-6. **Evaluation**  
-   - Accuracy, Precision, Recall, F1-score  
-   - Confusion Matrix (saved to `plots/confusion_matrix.png`)  
-
-7. **Model Persistence**  
-   - Save best-performing model and TF-IDF vectorizer for reuse  
+**👉 Live Demo:** https://data-science-projects-wwaoc6hzwvpkbxzde3krsv.streamlit.app/
 
 ---
 
-## 📊 Dataset
-- **Name:** Sentiment140  
-- **Source:** [Kaggle Dataset Link](https://www.kaggle.com/datasets/kazanova/sentiment140)  
-- **Size:** 1.6M tweets labeled as *positive (1)* or *negative (0)*  
-- **Features:**
-  - Tweet ID  
-  - Date  
-  - Query  
-  - User  
-  - Tweet text (cleaned for training)
-
-📌 Note: The full dataset is too large to upload to GitHub.  
-Only a **sample file (`data/sample.csv`)** is included for demonstration.  
-For complete experiments, please download the dataset directly from Kaggle.
+## 🔹 Features
+- Upload your own CSV dataset (`text,label`) or use the built-in sample  
+- Automatic text cleaning (lowercasing, remove URLs, mentions, hashtags, punctuation)  
+- Train/test split with configurable validation size  
+- TF-IDF vectorization (adjustable max_features, min_df, max_df, stopwords toggle)  
+- Models: Logistic Regression, Naive Bayes  
+- Metrics: Accuracy, ROC-AUC, Confusion Matrix, Classification Report  
+- Live inference: enter any sentence and get predicted sentiment instantly  
+- Download trained model (`model.pkl`) and vectorizer (`tfidf.pkl`)  
 
 ---
 
-## 📈 Results
-- **Logistic Regression** performed best among baseline models.  
-- Achieved strong accuracy and ROC-AUC scores on the validation set.  
-
-Example visualization (confusion matrix):  
-<img width="657" height="492" alt="Screenshot 2025-09-23 163453" src="https://github.com/user-attachments/assets/6d71506a-98b6-4fb1-830d-8b97c7517222" />
+## 🔹 Project Structure
+```
+sentiment-analysis/
+├── sentiment_app.py      # Streamlit app (entry point)
+├── requirements.txt      # Dependencies
+├── sentiment_sample.csv  # Small sample dataset (optional)
+└── README.md
+```
 
 ---
 
-## 🚀 How to Run
-1. Clone this repository:
-   ```bash
-   git clone https://github.com/your-username/sentiment-analysis.git
-   cd sentiment-analysis
+## 🔹 Run Locally
+
+1. Clone the project:
+```bash
+git clone https://github.com/<your-username>/sentiment-analysis.git
+cd sentiment-analysis
+```
+
+2. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+3. Start the app:
+```bash
+streamlit run sentiment_app.py
+```
+
+4. Open http://localhost:8501 in your browser.
+
+---
+
+## 🔹 Sample Dataset Format
+Your CSV must contain:
+- `text` → the review/tweet sentence  
+- `label` → sentiment class (e.g., `positive`, `negative`)  
+
+Example (`sentiment_sample.csv`):
+```csv
+text,label
+I absolutely love this product!,positive
+Worst experience ever. Totally disappointed.,negative
+Pretty good overall.,positive
+```
+
+---
+
+## 🔹 Data Source
+- Built-in tiny sample (6 rows, for demo only)  
+- For larger experiments, use [Sentiment140 Dataset](https://www.kaggle.com/datasets/kazanova/sentiment140)  
+
+---
+
+## 🔹 Author
+**Joseph Wang (Mt. SAC)** — CS transfer applicant (Fall 2026)
