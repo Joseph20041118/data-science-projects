@@ -71,4 +71,3 @@ data-science-projects/
 
 **Joseph Wang**  
 🎓 Mt. San Antonio College — CS transfer applicant (Fall 2026)  
-🔗 GitHub · LinkedIn (links here)
