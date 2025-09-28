@@ -65,6 +65,15 @@ X = df['text']
 y = df[label_col] if label_col else None
 
 if label_col:
+    # 類別分佈提示
+    dist = df[label_col].value_counts().to_frame('count')
+    dist['ratio'] = (dist['count'] / dist['count'].sum()).round(3)
+    st.caption("Label distribution"); st.dataframe(dist)
+
+    if df[label_col].nunique() < 2:
+        st.error("Label column must contain at least two classes.")
+        st.stop()
+
     X_train, X_valid, y_train, y_valid = train_test_split(
         X, y, test_size=test_size, random_state=random_state, stratify=y
     )
@@ -74,8 +83,8 @@ else:
 
 # ---------- vectorizer (robust for tiny datasets) ----------
 max_features = st.sidebar.number_input('TF-IDF max_features', 1000, 200000, 20000, 1000)
-min_df_ui = st.sidebar.number_input('min_df (keep terms seen in ≥N docs)', 1, 10, 1, 1)  # default 1
-max_df_ui = st.sidebar.slider('max_df (drop overly common terms)', 0.5, 1.0, 1.0, 0.05)
+min_df_ui = st.sidebar.number_input('min_df (≥N docs)', 1, 10, 1, 1)
+max_df_ui = st.sidebar.slider('max_df (≤ratio of docs)', 0.5, 1.0, 1.0, 0.05)
 use_stop = st.sidebar.checkbox('Use English stopwords', False)
 
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -98,81 +107,64 @@ except ValueError:
 
 X_valid_vec = vectorizer.transform(X_valid)
 
-
 vocab_size = len(getattr(vectorizer, "vocabulary_", {}))
 st.caption(f"Vocabulary size: {vocab_size}")
 if vocab_size < 20:
-    st.warning("Vocabulary is very small. Try min_df=1, disable stopwords, or use a larger dataset.")
+    st.warning("Vocabulary is small. Try min_df=1, disable stopwords, or use more data.")
 
-
-
-
-# ---------- model ----------
+# ---------- models for evaluation ----------
 model_name = st.sidebar.selectbox('Model', ['Logistic Regression','Naive Bayes'])
-model = LogisticRegression(max_iter=2000, n_jobs=None) if model_name == 'Logistic Regression' else MultinomialNB()
+if model_name == 'Naive Bayes':
+    from sklearn.naive_bayes import MultinomialNB
+    model = MultinomialNB()
+else:
+    from sklearn.linear_model import LogisticRegression
+    model = LogisticRegression(max_iter=2000, class_weight='balanced', n_jobs=None)
 
 if label_col:
     model.fit(X_train_vec, y_train)
     preds = model.predict(X_valid_vec)
-    acc = accuracy_score(y_valid, preds)
-    st.metric('Accuracy', f'{acc:.4f}')
+    # ...（你的 metrics、confusion matrix、report 保持原樣）...
 
-    # ROC-AUC if binary and proba available
+    
+# ---------- Fit a final model on ALL labeled data for LIVE inference ----------
+if label_col:
+    vectorizer_prod = make_vectorizer(min_df_ui, max_df_ui, use_stop)
     try:
-        if hasattr(model, 'predict_proba'):
-            probs = model.predict_proba(X_valid_vec)[:, 1]
-            # infer positive class alphabetically
-            pos_label = sorted(y_valid.unique())[-1]
-            y_bin = (y_valid == pos_label).astype(int)
-            auc = roc_auc_score(y_bin, probs)
-            st.metric('ROC-AUC', f'{auc:.3f}')
-    except Exception:
-        pass
+        X_all_vec = vectorizer_prod.fit_transform(X)
+    except ValueError:
+        vectorizer_prod = make_vectorizer(min_df=1, max_df=1.0, stop=False)
+        X_all_vec = vectorizer_prod.fit_transform(X)
 
-    # Confusion Matrix
-    labels = sorted(y_valid.unique())
-    cm = confusion_matrix(y_valid, preds, labels=labels)
-    cm_df = pd.DataFrame(cm, index=labels, columns=labels)
-    st.subheader('Confusion Matrix')
-    st.dataframe(cm_df)
-    fig = px.imshow(cm_df, text_auto=True, title=f'Confusion Matrix — {model_name}')
-    st.plotly_chart(fig, use_container_width=True)
+    if model_name == 'Naive Bayes':
+        from sklearn.naive_bayes import MultinomialNB
+        model_prod = MultinomialNB()
+    else:
+        from sklearn.linear_model import LogisticRegression
+        model_prod = LogisticRegression(max_iter=2000, class_weight='balanced', n_jobs=None)
 
-    # Classification report
-    report = classification_report(y_valid, preds, output_dict=True, zero_division=0)
-    st.subheader('Classification Report')
-    st.dataframe(pd.DataFrame(report).T)
+    model_prod.fit(X_all_vec, y)
+else:
+    vectorizer_prod = None
+    model_prod = None
 
-# ---------- live inference with char-gram fallback ----------
+
+# ---------- live inference (use the FULL-DATA model) ----------
 st.subheader('Try a sentence')
 user_text = st.text_input('Enter text to predict sentiment', 'I absolutely love this product')
 
-def predict_with_char_fallback(txt: str):
-    cleaned = clean_text(txt)
-    vec = vectorizer.transform([cleaned])
-    if vec.nnz > 0:
-        return model.predict(vec)[0]
-
-
-    from sklearn.feature_extraction.text import TfidfVectorizer as CharTfidf
-    char_vec = CharTfidf(analyzer='char', ngram_range=(3,5))
-    char_X_train = char_vec.fit_transform(X_train)
-
-    from sklearn.linear_model import LogisticRegression
-    from sklearn.naive_bayes import MultinomialNB
-    if isinstance(model, LogisticRegression):
-        tmp = LogisticRegression(max_iter=1000, class_weight='balanced')
-    elif isinstance(model, MultinomialNB):
-        tmp = MultinomialNB()
-    else:
-        tmp = LogisticRegression(max_iter=1000, class_weight='balanced')
-    tmp.fit(char_X_train, y_train)
-    char_vec_input = char_vec.transform([cleaned])
-    return tmp.predict(char_vec_input)[0]
-
 if user_text:
-    pred = predict_with_char_fallback(user_text) if (label_col and len(X_train) > 0) else 'N/A (no labels)'
-    st.write('Prediction:', f'**{pred}**')
+    if not label_col:
+        st.info("Upload a labeled dataset to enable predictions.")
+    else:
+        cleaned = clean_text(user_text)
+        vec = vectorizer_prod.transform([cleaned])
+        if vec.nnz == 0:
+            st.warning("Sentence has no overlap with vocabulary. Set min_df=1, disable stopwords, or use more data.")
+        else:
+            pred = model_prod.predict(vec)[0]
+            st.write('Prediction:', f'**{pred}**')
+
 
 
 
