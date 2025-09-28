@@ -76,7 +76,7 @@ else:
 max_features = st.sidebar.number_input('TF-IDF max_features', 1000, 200000, 20000, 1000)
 min_df_ui = st.sidebar.number_input('min_df (keep terms seen in ≥N docs)', 1, 10, 1, 1)  # default 1
 max_df_ui = st.sidebar.slider('max_df (drop overly common terms)', 0.5, 1.0, 1.0, 0.05)
-use_stop = st.sidebar.checkbox('Use English stopwords', True)
+use_stop = st.sidebar.checkbox('Use English stopwords', False)  # 小資料建議先關閉
 
 def make_vectorizer(min_df, max_df, stop):
     return TfidfVectorizer(
@@ -92,16 +92,17 @@ vectorizer = make_vectorizer(min_df_ui, max_df_ui, use_stop)
 try:
     X_train_vec = vectorizer.fit_transform(X_train)
 except ValueError:
-    # Fallback for very small / sparse datasets
+    # Fallback for very
     vectorizer = make_vectorizer(min_df=1, max_df=1.0, stop=False)
     X_train_vec = vectorizer.fit_transform(X_train)
 
 X_valid_vec = vectorizer.transform(X_valid)
 
-#  need at least two classes to train/evaluate
-if label_col and df[label_col].nunique() < 2:
-    st.error("Label column must contain at least two classes (e.g., positive and negative).")
-    st.stop()
+vocab_size = len(vectorizer.vocabulary_) if hasattr(vectorizer, "vocabulary_") else 0
+st.caption(f"Vocabulary size: {vocab_size}")
+if vocab_size < 20:
+    st.warning("Vocabulary is very small. Increase data or set min_df=1, disable stopwords.")
+
 
 
 
@@ -143,11 +144,19 @@ if label_col:
 
 # ---------- live inference ----------
 st.subheader('Try a sentence')
-user_text = st.text_input('Enter text to predict sentiment', 'I love this!')
+user_text = st.text_input('Enter text to predict sentiment', 'I absolutely love this product')
+
 if user_text:
-    vec = vectorizer.transform([clean_text(user_text)])
-    pred = model.predict(vec)[0] if label_col else 'N/A (no labels to train)'
-    st.write('Prediction:', f'**{pred}**')
+    cleaned = clean_text(user_text)
+    vec = vectorizer.transform([cleaned])
+
+    if vec.nnz == 0:
+        st.warning("This sentence has no overlap with the trained vocabulary. "
+                   "Try lowering min_df to 1, disabling stopwords, or training on more data.")
+    else:
+        pred = model.predict(vec)[0] if label_col else 'N/A (no labels to train)'
+        st.write('Prediction:', f'**{pred}**')
+
 
 # ---------- download artifacts ----------
 st.subheader('Download trained artifacts')
