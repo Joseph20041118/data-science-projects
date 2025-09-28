@@ -1,4 +1,4 @@
-# 🏡 House Price Prediction — Streamlit App (v3)
+# 🏡 House Price Prediction — Streamlit App
 
 [Live Demo on Streamlit Cloud](https://data-science-projects-h8cgwyb9xydhtxtip9mueh.streamlit.app/)
 
@@ -82,5 +82,10 @@ streamlit run app_v3.py
 
 - If your dataset is very small (<80 rows), the app automatically switches to **5-fold cross-validation** for metrics.  
 - Log-transform is disabled if target contains nonpositive values.  
-- Feature importances are shown via **permutation importance** for model-agnostic explanation.  
+- Feature importances are shown via **permutation importance** for model-agnostic explanation.
+
+---
+
+## 🔹 Author
+**Joseph Wang (Mt. SAC)** — CS transfer applicant (Fall 2026)
 
