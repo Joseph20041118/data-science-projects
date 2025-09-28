@@ -76,8 +76,9 @@ else:
 max_features = st.sidebar.number_input('TF-IDF max_features', 1000, 200000, 20000, 1000)
 min_df_ui = st.sidebar.number_input('min_df (keep terms seen in ≥N docs)', 1, 10, 1, 1)  # default 1
 max_df_ui = st.sidebar.slider('max_df (drop overly common terms)', 0.5, 1.0, 1.0, 0.05)
-use_stop = st.sidebar.checkbox('Use English stopwords', False)  # 小資料建議先關閉
+use_stop = st.sidebar.checkbox('Use English stopwords', False)
 
+from sklearn.feature_extraction.text import TfidfVectorizer
 def make_vectorizer(min_df, max_df, stop):
     return TfidfVectorizer(
         stop_words=('english' if stop else None),
@@ -92,16 +93,16 @@ vectorizer = make_vectorizer(min_df_ui, max_df_ui, use_stop)
 try:
     X_train_vec = vectorizer.fit_transform(X_train)
 except ValueError:
-    # Fallback for very
     vectorizer = make_vectorizer(min_df=1, max_df=1.0, stop=False)
     X_train_vec = vectorizer.fit_transform(X_train)
 
 X_valid_vec = vectorizer.transform(X_valid)
 
-vocab_size = len(vectorizer.vocabulary_) if hasattr(vectorizer, "vocabulary_") else 0
+
+vocab_size = len(getattr(vectorizer, "vocabulary_", {}))
 st.caption(f"Vocabulary size: {vocab_size}")
 if vocab_size < 20:
-    st.warning("Vocabulary is very small. Increase data or set min_df=1, disable stopwords.")
+    st.warning("Vocabulary is very small. Try min_df=1, disable stopwords, or use a larger dataset.")
 
 
 
@@ -142,20 +143,37 @@ if label_col:
     st.subheader('Classification Report')
     st.dataframe(pd.DataFrame(report).T)
 
-# ---------- live inference ----------
+# ---------- live inference with char-gram fallback ----------
 st.subheader('Try a sentence')
 user_text = st.text_input('Enter text to predict sentiment', 'I absolutely love this product')
 
-if user_text:
-    cleaned = clean_text(user_text)
+def predict_with_char_fallback(txt: str):
+    cleaned = clean_text(txt)
     vec = vectorizer.transform([cleaned])
+    if vec.nnz > 0:
+        return model.predict(vec)[0]
 
-    if vec.nnz == 0:
-        st.warning("This sentence has no overlap with the trained vocabulary. "
-                   "Try lowering min_df to 1, disabling stopwords, or training on more data.")
+
+    from sklearn.feature_extraction.text import TfidfVectorizer as CharTfidf
+    char_vec = CharTfidf(analyzer='char', ngram_range=(3,5))
+    char_X_train = char_vec.fit_transform(X_train)
+
+    from sklearn.linear_model import LogisticRegression
+    from sklearn.naive_bayes import MultinomialNB
+    if isinstance(model, LogisticRegression):
+        tmp = LogisticRegression(max_iter=1000, class_weight='balanced')
+    elif isinstance(model, MultinomialNB):
+        tmp = MultinomialNB()
     else:
-        pred = model.predict(vec)[0] if label_col else 'N/A (no labels to train)'
-        st.write('Prediction:', f'**{pred}**')
+        tmp = LogisticRegression(max_iter=1000, class_weight='balanced')
+    tmp.fit(char_X_train, y_train)
+    char_vec_input = char_vec.transform([cleaned])
+    return tmp.predict(char_vec_input)[0]
+
+if user_text:
+    pred = predict_with_char_fallback(user_text) if (label_col and len(X_train) > 0) else 'N/A (no labels)'
+    st.write('Prediction:', f'**{pred}**')
+
 
 
 # ---------- download artifacts ----------
