@@ -36,6 +36,19 @@ def tiny_sample_df():
     }
     return pd.DataFrame(data)
 
+# Optional: use a larger built-in sample if present next to the app
+def maybe_load_large_sample():
+    for name in ['sentiment_sample_large.csv', os.path.join('data','sentiment_sample_large.csv')]:
+        if os.path.exists(name):
+            try:
+                df = pd.read_csv(name)
+                if {'text','label'}.issubset(df.columns):
+                    st.info(f'Loaded bundled sample: {name} ({len(df)} rows)')
+                    return df
+            except Exception:
+                pass
+    return None
+
 # ---------- sidebar: data input ----------
 st.sidebar.header('Dataset')
 uploader = st.sidebar.file_uploader('Upload CSV with columns: text,label (label: positive/negative)', type=['csv'])
@@ -44,8 +57,12 @@ if uploader is not None:
     df = pd.read_csv(uploader)
     st.success('Loaded uploaded CSV.')
 else:
-    st.info('Using built-in tiny sample. Upload your dataset to train on more data.')
-    df = tiny_sample_df()
+    df_large = maybe_load_large_sample()
+    if df_large is not None:
+        df = df_large
+    else:
+        st.info('Using built-in tiny sample. Upload your dataset to train on more data.')
+        df = tiny_sample_df()
 
 # validate & clean
 if 'text' not in df.columns:
@@ -87,7 +104,6 @@ min_df_ui = st.sidebar.number_input('min_df (≥N docs)', 1, 10, 1, 1)
 max_df_ui = st.sidebar.slider('max_df (≤ratio of docs)', 0.5, 1.0, 1.0, 0.05)
 use_stop = st.sidebar.checkbox('Use English stopwords', False)
 
-from sklearn.feature_extraction.text import TfidfVectorizer
 def make_vectorizer(min_df, max_df, stop):
     return TfidfVectorizer(
         stop_words=('english' if stop else None),
@@ -115,18 +131,48 @@ if vocab_size < 20:
 # ---------- models for evaluation ----------
 model_name = st.sidebar.selectbox('Model', ['Logistic Regression','Naive Bayes'])
 if model_name == 'Naive Bayes':
-    from sklearn.naive_bayes import MultinomialNB
     model = MultinomialNB()
 else:
-    from sklearn.linear_model import LogisticRegression
     model = LogisticRegression(max_iter=2000, class_weight='balanced', n_jobs=None)
 
 if label_col:
+    # Train on train split
     model.fit(X_train_vec, y_train)
     preds = model.predict(X_valid_vec)
-    # ...（你的 metrics、confusion matrix、report 保持原樣）...
 
-    
+    # Metrics
+    acc = accuracy_score(y_valid, preds)
+    st.subheader("Validation Metrics")
+    m1, m2 = st.columns(2)
+    with m1:
+        st.metric('Accuracy', f'{acc:.4f}')
+    with m2:
+        try:
+            if hasattr(model, 'predict_proba'):
+                probs = model.predict_proba(X_valid_vec)[:, 1]
+                # Map to binary if exactly 2 classes
+                if y_valid.nunique() == 2:
+                    positive = sorted(y_valid.unique())[-1]
+                    y_bin = (y_valid == positive).astype(int)
+                    auc = roc_auc_score(y_bin, probs)
+                    st.metric('ROC-AUC', f'{auc:.3f}')
+        except Exception:
+            pass
+
+    # Confusion Matrix (table + heatmap)
+    labels = sorted(y_valid.unique())
+    cm = confusion_matrix(y_valid, preds, labels=labels)
+    cm_df = pd.DataFrame(cm, index=labels, columns=labels)
+    st.subheader('Confusion Matrix')
+    st.dataframe(cm_df)
+    fig = px.imshow(cm_df, text_auto=True, title=f'Confusion Matrix — {model_name}', color_continuous_scale="Blues")
+    st.plotly_chart(fig, use_container_width=True)
+
+    # Classification Report
+    st.subheader('Classification Report')
+    report = classification_report(y_valid, preds, output_dict=True, zero_division=0)
+    st.dataframe(pd.DataFrame(report).T)
+
 # ---------- Fit a final model on ALL labeled data for LIVE inference ----------
 if label_col:
     vectorizer_prod = make_vectorizer(min_df_ui, max_df_ui, use_stop)
@@ -137,17 +183,14 @@ if label_col:
         X_all_vec = vectorizer_prod.fit_transform(X)
 
     if model_name == 'Naive Bayes':
-        from sklearn.naive_bayes import MultinomialNB
         model_prod = MultinomialNB()
     else:
-        from sklearn.linear_model import LogisticRegression
         model_prod = LogisticRegression(max_iter=2000, class_weight='balanced', n_jobs=None)
 
     model_prod.fit(X_all_vec, y)
 else:
     vectorizer_prod = None
     model_prod = None
-
 
 # ---------- live inference (use the FULL-DATA model) ----------
 st.subheader('Try a sentence')
@@ -165,9 +208,6 @@ if user_text:
             pred = model_prod.predict(vec)[0]
             st.write('Prediction:', f'**{pred}**')
 
-
-
-
 # ---------- download artifacts ----------
 st.subheader('Download trained artifacts')
 if label_col:
@@ -176,3 +216,4 @@ if label_col:
         st.download_button('Download model.pkl', data=pickle.dumps(model), file_name='sentiment_model.pkl')
     with c2:
         st.download_button('Download tfidf.pkl', data=pickle.dumps(vectorizer), file_name='tfidf.pkl')
+
