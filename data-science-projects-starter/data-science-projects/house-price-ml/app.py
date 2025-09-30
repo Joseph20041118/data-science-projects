@@ -1,5 +1,5 @@
 # app_v3.py — House Price Prediction (Regression) with safer target handling and smarter defaults
-# Run: streamlit run app_v3.py
+# Run: streamlit run app.py
 
 import os
 import io
