@@ -9,7 +9,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    # Set the correct working directory
     defaults:
       run:
         working-directory: data-science-projects-starter/data-science-projects/esg-stock-event-study
@@ -18,9 +17,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Show repo tree (debug)
+      - name: Debug repo structure
         run: |
+          echo "Current working directory:"
           pwd
+          echo "Files here:"
           ls -la
           echo "Parent directory:"
           ls -la ..
@@ -42,7 +43,7 @@ jobs:
           python make_dataset.py
 
       - name: Commit & push results
-        working-directory: ${{ github.workspace }}   # Back to repo root for git add
+        working-directory: ${{ github.workspace }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
