@@ -3,8 +3,10 @@
 fetch_esg_news_gdelt.py
 Query GDELT Doc API for ESG-related news by company keywords in the last 24 hours.
 Outputs:
-- data/esg_events/esg_events_<YYYY-MM-DD>.csv with columns:
-  ['published_utc','title','url','source','company','ticker','event_type','confidence']
+- data/esg_events/esg_events_<YYYY-MM-DD>.csv  (daily snapshot)
+- data/latest/esg_events_latest.csv            (always latest)
+Columns:
+  ['published_utc','title','url','source','lang','company','ticker','event_type','confidence']
 Notes:
 - This is a lightweight heuristic matcher (keyword search). For research-grade data, consider paid ESG datasets.
 """
@@ -13,7 +15,9 @@ import os, sys, datetime as dt, time, urllib.parse, requests, pandas as pd
 ROOT = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(ROOT, "data")
 ESG_DIR = os.path.join(DATA_DIR, "esg_events")
+LATEST_DIR = os.path.join(DATA_DIR, "latest")
 os.makedirs(ESG_DIR, exist_ok=True)
+os.makedirs(LATEST_DIR, exist_ok=True)
 
 GDELT_DOC_API = "https://api.gdeltproject.org/api/v2/doc/doc"
 
@@ -40,7 +44,6 @@ def classify_event(title: str) -> str:
     return "unknown"
 
 def query_gdelt(query: str, since_minutes: int = 1440, max_records: int = 250) -> pd.DataFrame:
-    # Timespan format examples: "15min", "1d"
     span = "1d" if since_minutes >= 1440 else f"{since_minutes}min"
     params = {
         "query": query,
@@ -74,7 +77,6 @@ def main():
     for _, row in company_df.iterrows():
         company = row["company"]
         ticker = row["ticker"]
-        # Build query: company name + ESG terms
         terms = "(" + " OR ".join([f'"{t}"' for t in POSITIVE_TERMS + NEGATIVE_TERMS]) + ")"
         q = f'"{company}" AND ({terms})'
         try:
@@ -84,7 +86,6 @@ def main():
             df["company"] = company
             df["ticker"] = ticker
             df["event_type"] = df["title"].apply(classify_event)
-            # crude confidence: positive if recognized language/title present
             df["confidence"] = df["title"].apply(lambda s: 0.9 if isinstance(s, str) and len(s) > 20 else 0.5)
             all_rows.append(df)
         except Exception as e:
@@ -97,13 +98,18 @@ def main():
         return
 
     out = pd.concat(all_rows, ignore_index=True)
-    # keep minimal columns
     out = out[["published_utc","title","url","source","lang","company","ticker","event_type","confidence"]]
 
-    tag = dt.date.today().isoformat()
-    out_path = os.path.join(ESG_DIR, f"esg_events_{tag}.csv")
-    out.to_csv(out_path, index=False, encoding="utf-8")
-    print(f"Saved ESG events to {out_path} (rows={len(out)})")
+    today_str = dt.date.today().isoformat()
+    hist_path = os.path.join(ESG_DIR, f"esg_events_{today_str}.csv")
+    latest_path = os.path.join(LATEST_DIR, "esg_events_latest.csv")
+
+    out.to_csv(hist_path, index=False, encoding="utf-8")
+    out.to_csv(latest_path, index=False, encoding="utf-8")
+
+    print(f"Saved ESG events → {hist_path} (rows={len(out)})")
+    print(f"Updated latest file → {latest_path}")
 
 if __name__ == "__main__":
     main()
+
