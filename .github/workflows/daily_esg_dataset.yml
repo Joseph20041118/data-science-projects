@@ -20,12 +20,12 @@ jobs:
 
     - name: Install dependencies
       run: |
-        cd esg-stock-event-study
+        cd data-science-projects/esg-stock-event-study
         pip install -r requirements.txt
 
     - name: Run pipeline
       run: |
-        cd esg-stock-event-study
+        cd data-science-projects/esg-stock-event-study
         python fetch_prices.py
         python fetch_esg_news_gdelt.py
         python make_dataset.py
@@ -34,6 +34,7 @@ jobs:
       run: |
         git config --global user.name "github-actions[bot]"
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
-        git add esg-stock-event-study/data/*
+        git add data-science-projects/esg-stock-event-study/data/*
         git commit -m "Daily ESG dataset update" || echo "No changes to commit"
         git push
+
