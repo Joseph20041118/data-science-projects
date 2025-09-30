@@ -2,8 +2,11 @@ name: Daily ESG Dataset Update
 
 on:
   schedule:
-    - cron: "0 9 * * *"   # Run every day at 09:00 UTC
-  workflow_dispatch:       # Allow manual trigger
+    - cron: "0 9 * * *"   
+  workflow_dispatch:       
+
+permissions:
+  contents: write  
 
 jobs:
   build:
@@ -16,15 +19,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Debug repo structure
-        run: |
-          echo "Current working directory:"
-          pwd
-          echo "Files here:"
-          ls -la
-          echo "Parent directory:"
-          ls -la ..
+        with:
+          persist-credentials: true
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -49,5 +45,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add data-science-projects-starter/data-science-projects/esg-stock-event-study/data/*
           git commit -m "Daily ESG dataset update" || echo "No changes to commit"
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
           git push
+
 
