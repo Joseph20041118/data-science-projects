@@ -1,114 +1,166 @@
 #!/usr/bin/env python3
 """
-fetch_esg_news_gdelt.py
-Query GDELT Doc API for ESG-related news by company keywords in the last 24 hours.
+make_dataset.py
+Join the latest prices/returns with the latest (or most recent snapshot) ESG events 
+to produce analysis-ready tables.
+
 Outputs:
-- data/esg_events/esg_events_<YYYY-MM-DD>.csv  (daily snapshot)
-- data/latest/esg_events_latest.csv            (always latest)
-Columns:
-  ['published_utc','title','url','source','lang','company','ticker','event_type','confidence']
+- data/latest/esg_events_latest.csv        # (auto-created if only snapshots exist)
+- data/latest/prices_latest.csv
+- data/latest/returns_latest.csv
+- data/latest/events_prices_panel.csv      # Event window price panel (tau = [EVENT_WIN_L, EVENT_WIN_R])
+
+Environment variable overrides (optional):
+- EST_WIN_L, EST_WIN_R     # Estimation window (not sliced here, kept for downstream use)
+- EVENT_WIN_L, EVENT_WIN_R # Event window (default -5, +5)
+
 Notes:
-- This is a lightweight heuristic matcher (keyword search). For research-grade data, consider paid ESG datasets.
+- Prices and returns are mirrored to `data/latest/` for consistency.
+- ESG events are loaded preferentially from `data/latest/esg_events_latest.csv`.
+  If not found, the newest snapshot from `data/esg_events/` is used and mirrored to `latest`.
+- The output `events_prices_panel.csv` contains per-event price windows, ready for
+  abnormal return calculations in downstream notebooks.
 """
-import os, sys, datetime as dt, time, urllib.parse, requests, pandas as pd
+import os
+import glob
+import datetime as dt
+import pandas as pd
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(ROOT, "data")
-ESG_DIR = os.path.join(DATA_DIR, "esg_events")
 LATEST_DIR = os.path.join(DATA_DIR, "latest")
-os.makedirs(ESG_DIR, exist_ok=True)
+PRICES_DIR = os.path.join(DATA_DIR, "prices")
+RETURNS_DIR = os.path.join(DATA_DIR, "returns")
+ESG_DIR = os.path.join(DATA_DIR, "esg_events")
+
 os.makedirs(LATEST_DIR, exist_ok=True)
 
-GDELT_DOC_API = "https://api.gdeltproject.org/api/v2/doc/doc"
+# ---- Config (event window can be overridden by environment variables) ----
+EVENT_WIN_L = int(os.getenv("EVENT_WIN_L", "-5"))
+EVENT_WIN_R = int(os.getenv("EVENT_WIN_R", "5"))
 
-# Basic ESG keyword sets (extend as needed)
-POSITIVE_TERMS = [
-    "sustainability", "carbon neutral", "net zero", "renewable", "green bond",
-    "ESG initiative", "sustainability report", "recycled", "solar", "wind"
-]
-NEGATIVE_TERMS = [
-    "environmental fine", "pollution", "oil spill", "labor strike", "lawsuit",
-    "ESG downgrade", "child labor", "greenwashing", "violation", "toxic waste"
-]
+def latest_file(pattern: str):
+    files = glob.glob(pattern)
+    if not files:
+        return None
+    # Sort by filename and return the latest (assuming *_YYYY-MM-DD.csv naming convention)
+    files.sort()
+    return files[-1]
 
-def load_company_map(path: str) -> pd.DataFrame:
-    return pd.read_csv(path)
+def load_latest_prices_returns():
+    """Load the most recent prices/returns snapshots by filename pattern; mirror them to data/latest/*.csv."""
+    pfile = latest_file(os.path.join(PRICES_DIR, "prices_*.csv"))
+    rfile = latest_file(os.path.join(RETURNS_DIR, "returns_*.csv"))
+    if pfile is None or rfile is None:
+        raise FileNotFoundError("Missing prices_*.csv or returns_*.csv under data/prices or data/returns")
+    prices = pd.read_csv(pfile, parse_dates=[0], index_col=0)
+    returns = pd.read_csv(rfile, parse_dates=[0], index_col=0)
 
-def classify_event(title: str) -> str:
-    t = (title or "").lower()
-    pos = any(term in t for term in POSITIVE_TERMS)
-    neg = any(term in t for term in NEGATIVE_TERMS)
-    if pos and not neg: return "positive"
-    if neg and not pos: return "negative"
-    if pos and neg: return "mixed"
-    return "unknown"
+    # Mirror to latest
+    prices_out = os.path.join(LATEST_DIR, "prices_latest.csv")
+    returns_out = os.path.join(LATEST_DIR, "returns_latest.csv")
+    prices.to_csv(prices_out)
+    returns.to_csv(returns_out)
+    print(f"[OK] Saved latest prices → {prices_out}")
+    print(f"[OK] Saved latest returns → {returns_out}")
+    return prices, returns
 
-def query_gdelt(query: str, since_minutes: int = 1440, max_records: int = 250) -> pd.DataFrame:
-    span = "1d" if since_minutes >= 1440 else f"{since_minutes}min"
-    params = {
-        "query": query,
-        "mode": "ArtList",
-        "format": "json",
-        "timespan": span,
-        "maxrecords": str(max_records),
-        "sort": "datedesc"
-    }
-    url = GDELT_DOC_API + "?" + urllib.parse.urlencode(params)
-    r = requests.get(url, timeout=30)
-    r.raise_for_status()
-    js = r.json()
-    arts = js.get("articles", [])
+def load_esg_events_prefer_latest():
+    """
+    Prefer data/latest/esg_events_latest.csv.
+    If not found, fallback to the newest data/esg_events/esg_events_YYYY-MM-DD.csv,
+    and also copy it to latest for downstream consistency.
+    """
+    latest_path = os.path.join(LATEST_DIR, "esg_events_latest.csv")
+    if os.path.exists(latest_path):
+        df = pd.read_csv(latest_path)
+        print(f"[OK] Using latest ESG events → {latest_path} (rows={len(df)})")
+        return df
+
+    # fallback to newest snapshot
+    snap = latest_file(os.path.join(ESG_DIR, "esg_events_*.csv"))
+    if snap is None:
+        print("[WARN] No ESG events found (neither latest nor snapshot). Returning empty frame.")
+        cols = ["published_utc","title","url","source","lang","company","ticker","event_type","confidence"]
+        return pd.DataFrame(columns=cols)
+
+    df = pd.read_csv(snap)
+    # also write to latest for downstream
+    df.to_csv(latest_path, index=False)
+    print(f"[OK] Fallback to snapshot → {snap} and mirrored to → {latest_path} (rows={len(df)})")
+    return df
+
+def build_event_prices_panel(prices: pd.DataFrame, events: pd.DataFrame, window=(EVENT_WIN_L, EVENT_WIN_R)):
+    """
+    For each event (ticker, event_date), collect price rows within [t+L, t+R],
+    and create a relative day index 'tau'.
+    """
+    # Normalize index to dates only
+    p = prices.copy()
+    p.index = pd.to_datetime(p.index).date
+
+    # Ensure events contain 'event_date'
+    if "event_date" not in events.columns:
+        # If only 'published_utc' is available, convert to event_date
+        if "published_utc" in events.columns:
+            events = events.copy()
+            events["event_date"] = pd.to_datetime(events["published_utc"]).dt.date
+        else:
+            # If empty, return an empty panel
+            return pd.DataFrame(columns=["date","ticker","event_date","tau","price"])
+
     rows = []
-    for a in arts:
-        rows.append({
-            "published_utc": a.get("seendate"),
-            "title": a.get("title"),
-            "url": a.get("url"),
-            "source": a.get("sourceCountry"),
-            "lang": a.get("language")
-        })
-    return pd.DataFrame(rows)
+    L, R = window
+    for _, ev in events.iterrows():
+        tic = ev.get("ticker")
+        if not tic or tic not in p.columns:
+            continue
+        t0 = ev["event_date"]
+        try:
+            t0 = pd.to_datetime(t0).date()
+        except Exception:
+            continue
+
+        start = t0 + dt.timedelta(days=L)
+        end = t0 + dt.timedelta(days=R)
+        seg = p.loc[(p.index >= start) & (p.index <= end), [tic]].copy()
+        if seg.empty:
+            continue
+
+        seg["date"] = pd.to_datetime(seg.index)
+        seg["ticker"] = tic
+        seg["event_date"] = pd.to_datetime(t0)
+        seg["tau"] = (seg["date"].dt.normalize() - pd.to_datetime(t0)).dt.days
+        rows.append(seg.rename(columns={tic: "price"})[["date","ticker","event_date","tau","price"]])
+
+    if not rows:
+        print("[WARN] No matching prices found for given ESG events. Panel will be empty.")
+        return pd.DataFrame(columns=["date","ticker","event_date","tau","price"])
+
+    out = pd.concat(rows, ignore_index=True)
+    out = out.sort_values(["ticker","event_date","tau"]).reset_index(drop=True)
+    return out
 
 def main():
-    company_map_path = os.path.join(ROOT, "company_ticker_map.csv")
-    company_df = load_company_map(company_map_path)
+    # 1) Load the most recent prices/returns and mirror them to data/latest
+    prices, returns = load_latest_prices_returns()
 
-    all_rows = []
-    for _, row in company_df.iterrows():
-        company = row["company"]
-        ticker = row["ticker"]
-        terms = "(" + " OR ".join([f'"{t}"' for t in POSITIVE_TERMS + NEGATIVE_TERMS]) + ")"
-        q = f'"{company}" AND ({terms})'
-        try:
-            df = query_gdelt(q, since_minutes=1440, max_records=250)
-            if df.empty:
-                continue
-            df["company"] = company
-            df["ticker"] = ticker
-            df["event_type"] = df["title"].apply(classify_event)
-            df["confidence"] = df["title"].apply(lambda s: 0.9 if isinstance(s, str) and len(s) > 20 else 0.5)
-            all_rows.append(df)
-        except Exception as e:
-            print(f"[WARN] query failed for {company}: {e}")
+    # 2) Load ESG events: prefer latest, otherwise use the most recent snapshot and mirror it to latest
+    events = load_esg_events_prefer_latest()
 
-        time.sleep(0.5)  # be polite
+    # 3) Build event price panel (uses prices; abnormal returns computed later in notebooks)
+    panel = build_event_prices_panel(prices, events, window=(EVENT_WIN_L, EVENT_WIN_R))
 
-    if not all_rows:
-        print("No ESG articles found in the last day.")
-        return
+    # 4) Save to data/latest
+    events_out = os.path.join(LATEST_DIR, "esg_events_latest.csv")
+    if not os.path.exists(events_out):
+        events.to_csv(events_out, index=False)
+    panel_out = os.path.join(LATEST_DIR, "events_prices_panel.csv")
+    panel.to_csv(panel_out, index=False)
 
-    out = pd.concat(all_rows, ignore_index=True)
-    out = out[["published_utc","title","url","source","lang","company","ticker","event_type","confidence"]]
-
-    today_str = dt.date.today().isoformat()
-    hist_path = os.path.join(ESG_DIR, f"esg_events_{today_str}.csv")
-    latest_path = os.path.join(LATEST_DIR, "esg_events_latest.csv")
-
-    out.to_csv(hist_path, index=False, encoding="utf-8")
-    out.to_csv(latest_path, index=False, encoding="utf-8")
-
-    print(f"Saved ESG events → {hist_path} (rows={len(out)})")
-    print(f"Updated latest file → {latest_path}")
+    print(f"[OK] Saved latest ESG events   → {events_out} (rows={len(events)})")
+    print(f"[OK] Saved event price panel  → {panel_out} (rows={len(panel)})")
 
 if __name__ == "__main__":
     main()
+
