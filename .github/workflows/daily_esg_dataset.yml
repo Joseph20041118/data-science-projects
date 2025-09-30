@@ -2,39 +2,51 @@ name: Daily ESG Dataset Update
 
 on:
   schedule:
-    - cron: "0 9 * * *"   # 每天 09:00 UTC 自動跑
-  workflow_dispatch:       # 允許你手動觸發
+    - cron: "0 9 * * *"   # Run every day at 09:00 UTC
+  workflow_dispatch:       # Allow manual trigger
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
+    # Set the correct working directory
+    defaults:
+      run:
+        working-directory: data-science-projects-starter/data-science-projects/esg-stock-event-study
+
     steps:
-    - name: Checkout repo
-      uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: "3.10"
+      - name: Show repo tree (debug)
+        run: |
+          pwd
+          ls -la
+          echo "Parent directory:"
+          ls -la ..
 
-    - name: Install dependencies
-      run: |
-        cd data-science-projects/esg-stock-event-study
-        pip install -r requirements.txt
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
 
-    - name: Run pipeline
-      run: |
-        cd data-science-projects/esg-stock-event-study
-        python fetch_prices.py
-        python fetch_esg_news_gdelt.py
-        python make_dataset.py
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
 
-    - name: Commit and push results
-      run: |
-        git config --global user.name "github-actions[bot]"
-        git config --global user.email "github-actions[bot]@users.noreply.github.com"
-        git add data-science-projects/esg-stock-event-study/data/*
-        git commit -m "Daily ESG dataset update" || echo "No changes to commit"
-        git push
+      - name: Run data pipeline
+        run: |
+          python fetch_prices.py
+          python fetch_esg_news_gdelt.py
+          python make_dataset.py
+
+      - name: Commit & push results
+        working-directory: ${{ github.workspace }}   # Back to repo root for git add
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data-science-projects-starter/data-science-projects/esg-stock-event-study/data/*
+          git commit -m "Daily ESG dataset update" || echo "No changes to commit"
+          git push
 
