@@ -1,32 +1,70 @@
-# ESG Stock Event Study
+# 🌱 ESG Stock Event Study
 
-## 🔎 Overview
-Study stock reactions around ESG news events using AAR/CAR.
+Analyze the impact of **ESG-related news** on stock returns using **event study methodology (AAR/CAR)**.  
+
+---
+
+## 🎯 Objective
+- Measure whether ESG-related events (e.g., sustainability announcements, green bond issuance, environmental fines) have a **significant impact on stock prices**.  
+- Compare **abnormal returns (AR)** and **cumulative abnormal returns (CAR)** around the event window.  
+
+---
 
 ## 📂 Dataset
-- Describe the dataset source and how to download it.
-- Place raw files in the `data/` folder (do **not** commit large files).
+- Stock price data from **Yahoo Finance (yfinance)**.  
+- ESG event dates collected from news or reports (mock dataset included for demo).  
 
-## ⚙️ Tech
-- Python, Jupyter Notebook
-- pandas, numpy, matplotlib
-- (Optional libs) yfinance, statsmodels
+---
 
-## 🚀 Tasks
-- Data cleaning & EDA
-- Modeling or visualization
-- Evaluation & charts
+## 🧰 Methodology
+1. **Data Preparation**  
+   - Collect stock price data (event firm + market index).  
+   - Align data around event dates (event windows, estimation windows).  
 
-## 📊 Results
-- Include key figures in the `plots/` folder and reference them here.
+2. **Market Model Estimation**  
+   - Estimate expected returns using OLS regression:  
+     R_{i,t} = α_i + β_i R_{m,t} + ε_{i,t}  
 
-## ▶️ How to Run
+3. **Abnormal Returns (AR)**  
+   - Compute AR = Actual Return – Expected Return.  
+
+4. **Average Abnormal Returns (AAR)** and **Cumulative Abnormal Returns (CAR)**  
+   - Aggregate across events to test significance.  
+
+5. **Statistical Testing**  
+   - t-tests for AAR / CAR significance.  
+   - Plot event study graphs.  
+
+---
+
+## 📊 Results (Example)
+- ESG-related news tends to generate **short-term abnormal returns**.  
+- CAR plots visualize market reactions pre- and post-event.  
+- Demo dataset suggests stronger reactions to **negative ESG news**.  
+
+---
+
+## 🚀 How to Run
+
 ```bash
-pip install -r ../requirements.txt
-jupyter notebook
-```
-Open the notebook in this folder and run all cells.
+# 1. Install dependencies
+pip install -r requirements.txt
 
-## ✅ Next Steps
-- Add improvements or new features.
-- Write short notes for what you learned.
+# 2. Open the notebook
+cd esg-stock-event-study
+jupyter notebook event_study.ipynb
+```
+
+---
+
+## 📌 Future Work
+- Expand dataset with real ESG event collections.  
+- Compare across industries (e.g., energy vs. tech).  
+- Add robustness checks (different event windows).  
+
+---
+
+## 👤 Author
+
+**Joseph Wang**  
+🎓 Mt. San Antonio College — CS transfer applicant (Fall 2026)  
