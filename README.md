@@ -49,4 +49,4 @@ It serves as a collection of end-to-end projects, each in its own folder with de
 
 **Joseph Wang**  
 🎓 Mt. San Antonio College — Computer Science Transfer Applicant (Fall 2026)  
-🔗 [GitHub](https://github.com/your-username) | [LinkedIn](https://linkedin.com/in/your-profile)
+🔗 [GitHub](https://github.com/Joseph20041118)
