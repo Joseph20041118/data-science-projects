@@ -72,3 +72,6 @@ python make_dataset.py
 streamlit run app.py
 ```
 Go to: [http://localhost:8501](http://localhost:8501)
+
+## 🔹 Author
+**Joseph Wang (Mt. SAC)** — CS transfer applicant (Fall 2026)
