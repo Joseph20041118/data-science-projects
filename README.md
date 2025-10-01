@@ -6,16 +6,16 @@ It serves as a collection of end-to-end projects, each in its own folder with de
 
 ## 🚀 Projects in this Repository
 
-- 🦠 [covid19-dashboard](.data-science-projects-starter/data-science-projects/covid19-dashboard)  
+- 🦠 [covid19-dashboard](/data-science-projects-starter/data-science-projects/covid19-dashboard)  
   Interactive COVID-19 time-series visualization dashboard (Streamlit/Dash).
 
-- 🏡 [house-price-ml](./data-science-projects-starter/data-science-projects/house-price-ml)  
+- 🏡 [house-price-ml](/data-science-projects-starter/data-science-projects/house-price-ml)  
   Regression models for house price prediction (Linear Regression, Random Forest, XGBoost).
 
-- 💬 [sentiment-analysis](./data-science-projects-starter/data-science-projects/sentiment-analysis)  
+- 💬 [sentiment-analysis](/data-science-projects-starter/data-science-projects/sentiment-analysis)  
   Sentiment classification for text reviews (English + Traditional Chinese option).
 
-- 🌱 [esg-stock-event-study](./data-science-projects-starter/data-science-projects/esg-stock-event-study)  
+- 🌱 [esg-stock-event-study](/data-science-projects-starter/data-science-projects/esg-stock-event-study)  
   Event study of ESG news and their impact on stock returns (AAR/CAR).
 
 ---
