@@ -1,12 +1,14 @@
-# AI News Summarizer Dashboard (English Only)
-# Streamlit app for summarizing news/content from URLs, pasted text, or uploaded files.
+# AI News Summarizer Dashboard (Fixed loader)
+# Key changes:
+#  - Avoid device_map='auto' to remove 'accelerate' requirement on CPU-only
+#  - Add graceful fallback to smaller models
+#  - Clearer error messages
 
 import io
 import re
-
 import streamlit as st
 
-# Optional dependencies handled gracefully
+# Optional deps
 try:
     import trafilatura
 except Exception:
@@ -19,8 +21,8 @@ try:
 except Exception:
     PlaintextParser = Tokenizer = LexRankSummarizer = None
 
-# Transformers (Hugging Face) for abstractive summarization
 from transformers import pipeline
+
 
 APP_TITLE = "📰 AI News Summarizer Dashboard"
 APP_DESC = (
@@ -30,21 +32,23 @@ APP_DESC = (
 
 st.set_page_config(page_title="AI News Summarizer", page_icon="📰", layout="centered")
 
+
 # -----------------------------
 # Utilities
 # -----------------------------
-
 def clean_text(text: str) -> str:
     if not text:
         return ""
-    text = re.sub(r"\s+", " ", text).strip()
-    return text
+    return re.sub(r"\s+", " ", text).strip()
+
 
 def read_uploaded_file(file) -> str:
     name = file.name.lower()
     data = file.read()
+
     if name.endswith((".txt", ".md")):
         return data.decode("utf-8", errors="ignore")
+
     if name.endswith(".pdf"):
         try:
             from pdfminer.high_level import extract_text
@@ -53,6 +57,7 @@ def read_uploaded_file(file) -> str:
         except Exception as e:
             st.warning(f"PDF parsing failed: {e}")
             return ""
+
     if name.endswith(".docx"):
         try:
             import docx
@@ -61,10 +66,13 @@ def read_uploaded_file(file) -> str:
         except Exception as e:
             st.warning(f"DOCX parsing failed: {e}")
             return ""
+
+    # Fallback: best effort decode
     try:
         return data.decode("utf-8", errors="ignore")
     except Exception:
         return ""
+
 
 def extract_from_url(url: str) -> str:
     if trafilatura is None:
@@ -77,6 +85,7 @@ def extract_from_url(url: str) -> str:
         st.warning(f"Extraction failed: {e}")
         return ""
 
+
 def sumy_lexrank_summary(text: str, sentences: int = 5) -> str:
     if not (PlaintextParser and Tokenizer and LexRankSummarizer):
         return ""
@@ -88,22 +97,33 @@ def sumy_lexrank_summary(text: str, sentences: int = 5) -> str:
     except Exception:
         return ""
 
+
 @st.cache_resource(show_spinner=False)
 def load_summarizer(model_name: str):
-    # device_map="auto" lets transformers choose GPU if available; falls back to CPU.
-    return pipeline(
-        "summarization",
-        model=model_name,
-        device_map="auto",
-    )
+    """
+    Use CPU (device=-1) to avoid requiring `accelerate`.
+    If loading fails, fall back to a lighter model.
+    """
+    try:
+        return pipeline("summarization", model=model_name, device=-1)
+    except Exception as e:
+        st.warning(f"Failed to load model '{model_name}'. Error: {e}")
+        # Fallback to a lighter model
+        fallback = "t5-small"
+        if model_name != fallback:
+            st.info(f"Trying fallback model: {fallback}")
+            return pipeline("summarization", model=fallback, device=-1)
+        # If fallback also fails, re-raise
+        raise
+
 
 def chunk_text_for_model(text: str, max_chunk_chars: int = 2500):
     text = text.strip()
     if len(text) <= max_chunk_chars:
         return [text]
+    # split on sentence boundaries
     sentences = re.split(r'(?<=[.!?])\s+', text)
-    current = ""
-    chunks = []
+    current, chunks = "", []
     for s in sentences:
         if len(current) + len(s) + 1 <= max_chunk_chars:
             current += (" " if current else "") + s
@@ -115,6 +135,7 @@ def chunk_text_for_model(text: str, max_chunk_chars: int = 2500):
         chunks.append(current)
     return chunks
 
+
 def hf_summarize(text: str, model_name: str, max_words: int = 220) -> str:
     # Rough token estimate ~ 1.3x words
     max_tokens = int(max_words * 1.3)
@@ -123,14 +144,20 @@ def hf_summarize(text: str, model_name: str, max_words: int = 220) -> str:
     chunks = chunk_text_for_model(text, max_chunk_chars=2500)
     outputs = []
     for chunk in chunks:
-        out = summarizer(chunk, max_length=max_tokens, min_length=min_tokens, do_sample=False, truncation=True)
+        out = summarizer(
+            chunk,
+            max_length=max_tokens,
+            min_length=min_tokens,
+            do_sample=False,
+            truncation=True,
+        )
         outputs.append(out[0]["summary_text"])
     return " ".join(outputs)
+
 
 # -----------------------------
 # UI
 # -----------------------------
-
 st.title(APP_TITLE)
 st.caption(APP_DESC)
 
@@ -139,8 +166,8 @@ with st.sidebar:
     model_choice = st.selectbox(
         "Hugging Face model (Abstractive)",
         options=[
-            "facebook/bart-large-cnn",
             "sshleifer/distilbart-cnn-12-6",
+            "facebook/bart-large-cnn",
             "google/pegasus-xsum",
             "t5-small",
         ],
@@ -166,16 +193,22 @@ with tab1:
                     try:
                         summary = hf_summarize(content, model_choice, max_words=target_words)
                     except Exception as e:
-                        st.warning(f"Hugging Face summarization failed. Falling back to classic extractive method. Error: {e}")
+                        st.warning(
+                            "Hugging Face summarization failed. Falling back to classic extractive method. "
+                            f"Error: {e}"
+                        )
                         summary = sumy_lexrank_summary(content) or "(Fallback summarization also failed. Try different input or model.)"
-                    st.success("Done!")
                     st.subheader("Summary")
                     st.write(summary)
                     with st.expander("Extracted Content (truncated)"):
                         st.write(content[:5000])
 
 with tab2:
-    user_text = st.text_area("Paste the content you want to summarize", height=220, placeholder="Paste article or notes here…")
+    user_text = st.text_area(
+        "Paste the content you want to summarize",
+        height=220,
+        placeholder="Paste article or notes here…",
+    )
     if st.button("Generate Summary", type="primary", use_container_width=True, key="summ_from_text"):
         text = clean_text(user_text)
         if len(text) < 50:
@@ -185,7 +218,10 @@ with tab2:
                 try:
                     summary = hf_summarize(text, model_choice, max_words=target_words)
                 except Exception as e:
-                    st.warning(f"Hugging Face summarization failed. Falling back to classic extractive method. Error: {e}")
+                    st.warning(
+                        "Hugging Face summarization failed. Falling back to classic extractive method. "
+                        f"Error: {e}"
+                    )
                     summary = sumy_lexrank_summary(text) or "(Fallback summarization also failed. Try different input or model.)"
             st.subheader("Summary")
             st.write(summary)
@@ -202,7 +238,10 @@ with tab3:
                 try:
                     summary = hf_summarize(content, model_choice, max_words=target_words)
                 except Exception as e:
-                    st.warning(f"Hugging Face summarization failed. Falling back to classic extractive method. Error: {e}")
+                    st.warning(
+                        "Hugging Face summarization failed. Falling back to classic extractive method. "
+                        f"Error: {e}"
+                    )
                     summary = sumy_lexrank_summary(content) or "(Fallback summarization also failed. Try different input or model.)"
                 st.subheader("Summary")
                 st.write(summary)
