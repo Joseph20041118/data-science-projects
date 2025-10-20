@@ -13,5 +13,6 @@ python-docx>=1.1.0
 # Classical summarization fallback
 sumy>=0.11.0
 
-# Notebook (optional)
-jupyter>=1.0.0
+# Helpful if you later want device_map='auto' (GPU/auto-placement)
+accelerate>=0.31.0
+safetensors>=0.4.2
