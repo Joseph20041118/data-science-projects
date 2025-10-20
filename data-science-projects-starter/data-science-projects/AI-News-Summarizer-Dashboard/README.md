@@ -1,4 +1,4 @@
-# 📰 AI News Summarizer Dashboard (English)
+# 📰 AI News Summarizer Dashboard
 
 A **Streamlit** dashboard that summarizes content from **URLs**, **pasted text**, or **uploaded files**.
 It supports **Hugging Face transformers (abstractive)** with an **extractive LexRank fallback**.
