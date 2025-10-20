@@ -18,7 +18,7 @@ It serves as a collection of end-to-end projects, each in its own folder with de
 - 🌱 [esg-stock-event-study](/data-science-projects-starter/data-science-projects/esg-stock-event-study)  
   Event study of ESG news and their impact on stock returns (AAR/CAR).
   
-- 📰 [ai-news-summarizer-dashboard](/data-science-projects-starter/data-science-projects/ai-news-summarizer-dashboard)  
+- 📰 [ai-news-summarizer-dashboard](/data-science-projects-starter/data-science-projects/AI-News-Summarizer-Dashboard)  
   Streamlit-based AI summarization app using Hugging Face Transformers and LexRank fallback.
   Summarizes articles from **URLs**, **pasted text**, or **uploaded documents** with adjustable length, model selection, and auto chunking.
 ---
