@@ -1,0 +1,17 @@
+# Core app
+streamlit>=1.32.0
+transformers>=4.41.0
+torch>=2.2.0
+sentencepiece>=0.2.0
+
+# Content extraction & parsing
+trafilatura>=1.7.0
+lxml>=4.9.0
+pdfminer.six>=20221105
+python-docx>=1.1.0
+
+# Classical summarization fallback
+sumy>=0.11.0
+
+# Notebook (optional)
+jupyter>=1.0.0
