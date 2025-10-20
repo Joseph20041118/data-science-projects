@@ -3,9 +3,8 @@
 An interactive **AI-powered news summarizer** built with **Streamlit**, capable of summarizing content from **URLs**, **pasted text**, or **uploaded documents**.  
 Uses **Hugging Face Transformers** for abstractive summarization with an **extractive LexRank fallback**.
 
-👉 **Live Demo:** *([Streaml](https://data-science-projects-kcbuhm2rymxm47ctvmz4gz.streamlit.app/))*  
-📓 **Notebook:** `notebooks/demo.ipynb` (for experimentation and offline use)
-
+👉 **Live Demo:** *[Streaml](https://data-science-projects-kcbuhm2rymxm47ctvmz4gz.streamlit.app/)*  
+📓 **Notebook:** `notebooks.ipynb` 
 ---
 
 ## 🔹 Features
