@@ -2,6 +2,7 @@
 An interactive COVID-19 dashboard built with **Streamlit**, using the **Our World in Data (OWID)** dataset. Explore country-level trends for cases, deaths, and vaccinations with rolling averages and a global map.
 
 **👉 Live Demo:** https://data-science-projects-q6hmdio76khz3ud2fw6u8e.streamlit.app/
+🌐 **Note Book**:[Event study](/data-science-projects-starter/data-science-projects/esg-stock-event-study/event_study.ipynb).
 
 ## 🔹 Features
 - Select multiple countries/regions to compare  
