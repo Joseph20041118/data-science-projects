@@ -90,19 +90,12 @@ jupyter>=1.0.0
 
 ## 🔹 Screenshot
 
-> (Add your screenshot here)
+<img width="933" height="876" alt="Screenshot 2025-10-20 124614" src="https://github.com/user-attachments/assets/b1cf0621-e85d-4a1a-ad71-4c137d1fc05b" />
 
-![Dashboard Screenshot](assets/screenshot.png)
 
 ---
 
 ## 🔹 Author
 
 **Joseph Wang (Mt. SAC)** — Computer Science Transfer Applicant (Fall 2026)  
-GitHub: `@<your-username>`  
 
----
-
-## 🔹 License
-
-MIT © 2025
