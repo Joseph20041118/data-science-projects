@@ -53,7 +53,7 @@ Then open [http://localhost:8501](http://localhost:8501) in your browser.
 The demo notebook allows you to test summarization pipelines without Streamlit:
 
 ```bash
-jupyter notebook notebooks/demo.ipynb
+jupyter notebook notebooks.ipynb
 ```
 
 You can summarize text, test different models, and compare Hugging Face vs LexRank summaries.
@@ -74,17 +74,6 @@ python-docx>=1.1.0
 jupyter>=1.0.0
 ```
 
----
-
-## 🔹 Deployment (Streamlit Community Cloud)
-
-1️⃣ Push this project to GitHub.  
-2️⃣ On [Streamlit Cloud](https://streamlit.io/cloud), click **“New app”**.  
-3️⃣ Set:
-- Repository: `<your-username>/AI-News-Summarizer-Dashboard`
-- Branch: `main`
-- Main file: `app.py`  
-4️⃣ Click **Deploy**.
 
 ---
 
