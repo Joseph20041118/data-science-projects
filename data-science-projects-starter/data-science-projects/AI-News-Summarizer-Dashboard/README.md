@@ -3,7 +3,7 @@
 An interactive **AI-powered news summarizer** built with **Streamlit**, capable of summarizing content from **URLs**, **pasted text**, or **uploaded documents**.  
 Uses **Hugging Face Transformers** for abstractive summarization with an **extractive LexRank fallback**.
 
-👉 **Live Demo:** *(deploy to Streamlit Cloud or run locally)*  
+👉 **Live Demo:** *([deploy to Streamlit Cloud or run locally](https://data-science-projects-kcbuhm2rymxm47ctvmz4gz.streamlit.app/))*  
 📓 **Notebook:** `notebooks/demo.ipynb` (for experimentation and offline use)
 
 ---
@@ -18,22 +18,6 @@ Uses **Hugging Face Transformers** for abstractive summarization with an **extra
 - 🪢 **LexRank fallback** if the transformer model fails
 - 💻 Auto-detects hardware (GPU if available, else CPU)
 - 🧠 Includes **Jupyter notebook** demo for testing and customization
-
----
-
-## 🔹 Project Structure
-
-```
-AI-News-Summarizer-Dashboard/
-├── app.py              # Streamlit app (entry point)
-├── requirements.txt    # Dependencies
-├── README.md           # Project documentation
-├── .gitignore
-└── notebooks/
-    └── demo.ipynb      # Jupyter demo notebook (Hugging Face + LexRank)
-```
-
-> Long inputs are automatically split into chunks for better summarization results.
 
 ---
 
