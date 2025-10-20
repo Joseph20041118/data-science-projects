@@ -4,6 +4,7 @@ This project implements an **event study framework** for ESG-related corporate n
 It integrates data pipelines (prices, returns, ESG events) with a **Streamlit web app** that visualizes average and cumulative abnormal returns (AAR, CAR).
 
 🌐 **Live app**: [Streamlit Cloud Deployment](https://data-science-projects-kuclaejrt2adyr9j6nr8ao.streamlit.app/)
+🌐 **Note Book**:
 
 ---
 
