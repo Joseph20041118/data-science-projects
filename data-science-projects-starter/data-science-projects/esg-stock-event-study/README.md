@@ -5,7 +5,6 @@ It integrates data pipelines (prices, returns, ESG events) with a **Streamlit we
 
 🌐 **Live app**: [Streamlit Cloud Deployment](https://data-science-projects-kuclaejrt2adyr9j6nr8ao.streamlit.app/)
 🌐 **Note Book**:[Note](/data-science-projects-starter/data-science-projects/house-price-ml)  
-  Regression models for house price prediction (Linear Regression, Random Forest, XGBoost)
 
 ---
 
