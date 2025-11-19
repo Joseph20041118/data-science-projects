@@ -81,8 +81,9 @@ random_state = st.sidebar.number_input('Random state', 0, 9999, 42, 1)
 X = df['text']
 y = df[label_col] if label_col else None
 
+
 if label_col:
-    # 類別分佈提示
+
     dist = df[label_col].value_counts().to_frame('count')
     dist['ratio'] = (dist['count'] / dist['count'].sum()).round(3)
     st.caption("Label distribution"); st.dataframe(dist)
